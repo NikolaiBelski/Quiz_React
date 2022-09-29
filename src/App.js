@@ -1,100 +1,74 @@
-
+import React, { useState } from 'react';
 import './index.scss';
-import { useState } from 'react';
+import { Success } from './components/Success';
+import { Users } from './components/Users';
+import { useEffect } from 'react';
 
-
-const questions = [
-  {
-    title: 'У меня дома живет ... ?',
-    variants: ['5 котов', 'жена', 'жена, 5 котов и 3 крысы'],
-    correct: 2,
-  },
-  {
-    title: 'Пиво - это ... ',
-    variants: ['фу, как противно', 'пища богов', 'не знаю, я веган'],
-    correct: 2,
-  },
-  {
-    title: 'Скока можна, скока можна е... мать',
-    variants: [
-      'Почему так',
-      'Обэма виноват',
-      'Я прошла авганскую войну',
-    ],
-    correct: 2,
-  },
-];
-
- const Result = ({correctValue}) => {
-    return (
-        <div className='result'>
-            <img src="https://cdn-icons-png.flaticon.com/512/2278/2278992.png" />
-            <h2>Вы смогли осилить {correctValue} из {questions.length}</h2>
-            <a href="/">
-            <button>Все х... , давай по-новой</button>
-
-            </a>
-        </div>
-    )
-}
-
-
-
-  const  Game = ({questionDate,onClickVariant,state})=> {
-
-    const progress = Math.floor(state/questions.length*100);
-
-
-  
-    return (
-      <>
-        <div className="progress">
-          <div style={{ width: `${progress}%` }} className="progress__inner"></div>
-        </div>
-        <h1>{questionDate.title}</h1>
-        <ul>
-       {
-        questionDate.variants.map((elem,index) => (
-          <li key = {elem} onClick = {()=> onClickVariant(index)}>{elem}</li>
-        ))
-       }
-        </ul>
-      </>
-    )
-  }
-
+// Тут список пользователей: https://reqres.in/api/users
 
 function App() {
+const [users,setUsers] = useState([]);
+const [loading, setIsloading] = useState(true);
+const [searchValue, setSearchvalue] = useState('');
+const [invise, setInvise] = useState([]);
+const [succes,setSucces] = useState(false);
 
-  const [state, setState] = useState(0);
-  const question =  questions[state];
-  const [correctValue, setCorrect] = useState(0)
 
-  const onClickVariant = (index) => {
 
-    setState(item=>item+1);
-    if (index === question.correct) {
-      setCorrect((item) => item+1)
+useEffect(()=> {
+  async function getInfo() {
+    try {
+      const response = await fetch(`https://reqres.in/api/users`);
+      const usersInfo = await response.json();
+      return usersInfo
+    } catch (err) {
+      console.error('Произошла ошибка!', err);
     }
   }
+  
+  getInfo().then((item) => setUsers(item.data))
+           .catch((er)=>console.log(er))
+           .finally(()=>setIsloading(false))
 
-    return (
-      <div className="App">
+},[]);
 
-        {
-          state!==questions.length? <Game questionDate = {question} onClickVariant = {onClickVariant} state = {state}/>:<Result correctValue = {correctValue}/>
-        }
-                            
-      </div>
 
-      
-    );
+const onChangeSearch = (e) => {
+  setSearchvalue(e.target.value);
+  console.log(searchValue)
+}
 
+const onChangeInvise = (id) => {
+
+  if(invise.includes(id)) {
+    setInvise((item) => item.filter(item => item !== id))
+  }
+  else setInvise((item)=> [...item,id])
 
 }
 
-export default App;
+const onClickSendInfo = () => setSucces(true)
 
 
 
+  return (
+    <div className="App">
+        {
+succes?<Success count={invise.length}/>:<Users items={users} 
+                    isLoading = {loading} 
+                    onChangeSearch = {onChangeSearch}
+                    searchValue = {searchValue} 
+                    invise = {invise} 
+                    onChangeInvise = {onChangeInvise}
+                    onClickSendInfo = {onClickSendInfo}/>
 
+        }
+
+
+      
+      
+    </div>
+  );
+}
+
+export default App
